@@ -24,7 +24,6 @@ type SelpgArgs struct {
  * "page type": false(default) -> lNumber/page, true -> \f as next page
  * "print dest": ""(default) -> no print dest
  */
-
 func initArgs(args *SelpgArgs) {
 	flag.IntVarP(&args.startPage, "sNumber", "s", -1, "start page")
 	flag.IntVarP(&args.endPage, "eNumber", "e", -1, "end page")
@@ -54,6 +53,7 @@ func processArgs(args *SelpgArgs, progname *string) {
 			fmt.Fprintf(os.Stderr, "%s: 2st arg should be -e end_page\n", *progname)
 			os.Exit(1)
 		}
+
 	} else {
 		if args.startPage > args.endPage {
 			fmt.Fprintf(os.Stderr, "%s: start_page(%d) shouldn't be greater than end_page(%d)\n", *progname, args.startPage, args.endPage)
@@ -73,12 +73,22 @@ func processArgs(args *SelpgArgs, progname *string) {
 
 }
 
+/**
+ * there are two ways to input text:
+ * 1. input from stdin
+ * 2. input from file
+ * 
+ * there are two types of input text:
+ * 1. n lines per page
+ * 2. use form feed
+ */
 func processInput(args *SelpgArgs, progname *string) {
 
 	result := ""
 
+	/* input is from stdin */
 	if flag.NArg() == 0 {
-		// pageType: true -> by '\n', false -> by n lines/page
+		// pageType: true -> by '\f', false -> by n lines/page
 		if args.pageType {
 			reader := bufio.NewReader(os.Stdin)
 			selpgByF(reader, args, &result, progname)
@@ -87,6 +97,7 @@ func processInput(args *SelpgArgs, progname *string) {
 			selpgByLine(scanner, args, &result)
 		}
 	} else {
+		/* input is from file(falg.Arg(0)) */
 		args.inputFile = flag.Arg(0)
 		file, err := os.Open(args.inputFile)
 		if err != nil {
@@ -94,7 +105,7 @@ func processInput(args *SelpgArgs, progname *string) {
 			os.Exit(3)
 		}
 
-		// pageType: true -> by '\n', false -> by n lines/page
+		// pageType: true -> by '\f', false -> by n lines/page
 		if args.pageType {
 			reader := bufio.NewReader(file)
 			selpgByF(reader, args, &result, progname)
